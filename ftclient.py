@@ -1,9 +1,6 @@
 '''
 Name: John Costello
 Date: 11/24/2018
-Class: CS372
-Assignment: Project 2
-Program name: ftclient.py
 Description: This program uses the sockets API and TCP protocol
              to function as a FTP client with a C server. 
 '''
