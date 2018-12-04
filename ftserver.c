@@ -48,10 +48,10 @@ void setupConnectionAddress(int portNumber, struct sockaddr_in *serverAddress) {
     memset((char*)serverAddress, '\0', sizeof(*serverAddress)); 
 
     // Create a network-capable socket
-	serverAddress->sin_family = AF_INET; 
+    serverAddress->sin_family = AF_INET; 
 
     // Store the port number
-	serverAddress->sin_port = htons(portNumber); 
+    serverAddress->sin_port = htons(portNumber); 
 
     // Any address is allowed for connection to this process
     serverAddress->sin_addr.s_addr = INADDR_ANY; 
@@ -75,19 +75,19 @@ void setupDataAddress(int portNumber, char host[], struct sockaddr_in *serverAdd
     memset((char*)serverAddress, '\0', sizeof(*serverAddress)); 
 
     // Create a network-capable socket
-	serverAddress->sin_family = AF_INET; 
+    serverAddress->sin_family = AF_INET; 
 
     // Store the port number
-	serverAddress->sin_port = htons(portNumber); 
+    serverAddress->sin_port = htons(portNumber); 
 
     // Convert the machine name into a special form of address
-	serverHostInfo = gethostbyname(host); 
+    serverHostInfo = gethostbyname(host); 
 
     // Check for error
-	if (serverHostInfo == NULL) { fprintf(stderr, "ERROR, no such host\n"); exit(0); }
+    if (serverHostInfo == NULL) { fprintf(stderr, "ERROR, no such host\n"); exit(0); }
 
     // Copy in the address
-	memcpy((char*)&serverAddress->sin_addr.s_addr, (char*)serverHostInfo->h_addr, serverHostInfo->h_length); 
+    memcpy((char*)&serverAddress->sin_addr.s_addr, (char*)serverHostInfo->h_addr, serverHostInfo->h_length); 
 }
 
 /*****************************************************************************************
@@ -102,10 +102,10 @@ int createSocket() {
     int socketFD;
     
     // Create the socket
-	socketFD = socket(AF_INET, SOCK_STREAM, 0); 
+    socketFD = socket(AF_INET, SOCK_STREAM, 0); 
 
     // Check for error
-	if (socketFD < 0) error("SERVER: ERROR opening socket");
+    if (socketFD < 0) error("SERVER: ERROR opening socket");
 
     return socketFD;
 }
@@ -122,14 +122,14 @@ int createSocket() {
 
 void beginListening(int listenSocketFD, struct sockaddr_in *serverAddress, struct sockaddr_in clientAddress, socklen_t *sizeOfClientInfo) {
     // Connect socket to port and enable the socket to begin listening
-	if (bind(listenSocketFD, (struct sockaddr *)serverAddress, sizeof(*serverAddress)) < 0) 
-		error("ERROR on binding");
+    if (bind(listenSocketFD, (struct sockaddr *)serverAddress, sizeof(*serverAddress)) < 0) 
+	error("ERROR on binding");
 
-	// Flip the socket on - it can now receive up to 5 connections
-	listen(listenSocketFD, 5); 
+    // Flip the socket on - it can now receive up to 5 connections
+    listen(listenSocketFD, 5); 
 
-	// Get the size of the address for the client that will connect
-	*sizeOfClientInfo = sizeof(clientAddress); 
+    // Get the size of the address for the client that will connect
+    *sizeOfClientInfo = sizeof(clientAddress); 
 }
 
 /*****************************************************************************************
@@ -246,8 +246,8 @@ int traverseHandle(char *handle, char *IP, char *command, char *file_name) {
 
 void connectServer(int socketFD, struct sockaddr_in *serverAddress) {
     // Connect socket to address
-	if (connect(socketFD, (struct sockaddr*)serverAddress, sizeof(*serverAddress)) < 0) 
-		error("CLIENT: ERROR connecting");
+    if (connect(socketFD, (struct sockaddr*)serverAddress, sizeof(*serverAddress)) < 0) 
+	error("CLIENT: ERROR connecting");
 }
 
 /*****************************************************************************************
@@ -297,30 +297,30 @@ void sendFileName(int dataSocketFD, char *file_name) {
 ******************************************************************************************/
 
 void sendDirectory(int dataSocketFD, char *host, int port) {
-	DIR* dirToCheck; 
-	struct dirent *fileInDir; 
-	struct stat dirAttributes; 
-	
-	dirToCheck = opendir("."); 		
+    DIR* dirToCheck; 
+    struct dirent *fileInDir; 
+    struct stat dirAttributes; 
+
+    dirToCheck = opendir("."); 		
     int length = 0; 
 	
-	// print first 5 char (flip{x}) of string. 
-	// Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
-	printf("Sending directory contents to %.5s:%d\n", host, port); 
+    // print first 5 char (flip{x}) of string. 
+    // Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
+    printf("Sending directory contents to %.5s:%d\n", host, port); 
 
-	// Loop through all file names 
-	if (dirToCheck > 0) {
-		while ((fileInDir = readdir(dirToCheck)) != NULL) {
-			if (strcmp(fileInDir->d_name, ".") && (strcmp(fileInDir->d_name, ".."))) {
-				sendFileName(dataSocketFD, fileInDir->d_name); 
-			}
-		}
+    // Loop through all file names 
+    if (dirToCheck > 0) {
+    	while ((fileInDir = readdir(dirToCheck)) != NULL) {
+	    if (strcmp(fileInDir->d_name, ".") && (strcmp(fileInDir->d_name, ".."))) {
+		sendFileName(dataSocketFD, fileInDir->d_name); 
+	    }
 	}
+    }
 
-	// Let client know the data transfer is over
+    // Let client know the data transfer is over
     sendMessage(dataSocketFD, "@@");
 
-	closedir(dirToCheck);
+    closedir(dirToCheck);
  
 }
 
@@ -337,30 +337,29 @@ void sendDirectory(int dataSocketFD, char *host, int port) {
 
 void sendFile(int dataSocketFD, char *file_name, char *host, int port) {
     char buffer[MAX_BUFFER];
-	memset(buffer, '\0', MAX_BUFFER);
+    memset(buffer, '\0', MAX_BUFFER);
 
     FILE *file; 
     file = fopen(file_name, "r"); 
 		
 	if (file) {
-		// print first 5 char (flip{x}) of string. 
-		// Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
-		printf("Sending '%s' to %.5s:%d\n", file_name, host, port); 
-		sendMessage(dataSocketFD, "!OK!");
-		while (fgets(buffer, MAX_BUFFER, file)) {
-			sendMessage(dataSocketFD, buffer);
-			memset(buffer, '\0', MAX_BUFFER);
-		}
+	    // print first 5 char (flip{x}) of string. 
+	    // Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
+	    printf("Sending '%s' to %.5s:%d\n", file_name, host, port); 
+	    sendMessage(dataSocketFD, "!OK!");
+	    while (fgets(buffer, MAX_BUFFER, file)) {
+	    	sendMessage(dataSocketFD, buffer);
+		memset(buffer, '\0', MAX_BUFFER);
+	    }
 		
-		fclose(file); 
+	    fclose(file); 
 	}
 	else {
-		printf("File not found. Sending error message to %s:%d\n", host, port); 
-		sendMessage(dataSocketFD, "!KO!");
-		sendMessage(dataSocketFD, "NOT FOUND");
+	    printf("File not found. Sending error message to %s:%d\n", host, port); 
+	    sendMessage(dataSocketFD, "!KO!");
+	    sendMessage(dataSocketFD, "NOT FOUND");
 	}
     sendMessage(dataSocketFD, "@_done_@");
-
 }
 
 /*****************************************************************************************
@@ -372,11 +371,11 @@ void sendFile(int dataSocketFD, char *file_name, char *host, int port) {
 ******************************************************************************************/
 
 void CatchSIGINT(int signo) {					
-	char *message = "\nSIGINT Detected. Ending control connection\n : "; 
-	write(STDOUT_FILENO, message, 44);
-	close(listenSocketFD);
+    char *message = "\nSIGINT Detected. Ending control connection\n : "; 
+    write(STDOUT_FILENO, message, 44);
+    close(listenSocketFD);
 
-	exit(0); 
+    exit(0); 
 } 
 
 /*****************************************************************************************
@@ -387,11 +386,11 @@ void CatchSIGINT(int signo) {
 ******************************************************************************************/
 
 void HandleSIGINT() {						
-	struct sigaction SIGINT_action = {0}; 
-	SIGINT_action.sa_handler = CatchSIGINT;
-	sigfillset(&SIGINT_action.sa_mask); 
-	SIGINT_action.sa_flags = SA_RESTART; 
-	sigaction(SIGINT, &SIGINT_action, NULL); 	
+    struct sigaction SIGINT_action = {0}; 
+    SIGINT_action.sa_handler = CatchSIGINT;
+    sigfillset(&SIGINT_action.sa_mask); 
+    SIGINT_action.sa_flags = SA_RESTART; 
+    sigaction(SIGINT, &SIGINT_action, NULL); 	
 }
 
 /*****************************************************************************************
@@ -400,15 +399,15 @@ void HandleSIGINT() {
 ******************************************************************************************/
 
 void printCommand(char *command, char *file_name, char *client_host, int data_port) {
-	// print first 5 char (flip{x}) of string. 
-	// Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
-	printf("\nConnection from %.5s\n", client_host);
-	if (!strcmp(command, "-l")) {
-		printf("List directory requested on port %d\n", data_port);
-	}
-	else {
-		printf("File '%s' requested on port %d\n", file_name, data_port);
-	}
+    // print first 5 char (flip{x}) of string. 
+    // Source: https://stackoverflow.com/questions/7780809/is-it-possible-to-print-out-only-a-certain-section-of-a-c-string-without-making
+    printf("\nConnection from %.5s\n", client_host);
+    if (!strcmp(command, "-l")) {
+    	printf("List directory requested on port %d\n", data_port);
+    }
+    else {
+    	printf("File '%s' requested on port %d\n", file_name, data_port);
+    }
 }
 
 /*****************************************************************************************
@@ -419,16 +418,16 @@ void printCommand(char *command, char *file_name, char *client_host, int data_po
 ******************************************************************************************/
 
 int initializeConnection(int CONNECTION_FD) {
-	char initial_message[6];
-	memset(initial_message, '\0', 6);
-	recv(CONNECTION_FD, initial_message, 6, 0);
-	if (strcmp(initial_message, "ready?")) {
-		return 0;
-	}
+    char initial_message[6];
+    memset(initial_message, '\0', 6);
+    recv(CONNECTION_FD, initial_message, 6, 0);
+    if (strcmp(initial_message, "ready?")) {
+    	return 0;
+    }
 
-	sendMessage(CONNECTION_FD, "ready!");
+    sendMessage(CONNECTION_FD, "ready!");
 
-	return 1;
+    return 1;
 }
 
 /*****************************************************************************************
@@ -442,22 +441,22 @@ int initializeConnection(int CONNECTION_FD) {
 ******************************************************************************************/
 
 int establishDataConnection(int data_port, char *client_host, char *file_name) {
-	// Setup address, create socket, and connect socker to address
-	struct sockaddr_in serverDataAddress;
-	setupDataAddress(data_port, client_host, &serverDataAddress);
-	int dataSocketFD = createSocket(); 
-	connectServer(dataSocketFD, &serverDataAddress);  
+    // Setup address, create socket, and connect socker to address
+    struct sockaddr_in serverDataAddress;
+    setupDataAddress(data_port, client_host, &serverDataAddress);
+    int dataSocketFD = createSocket(); 
+    connectServer(dataSocketFD, &serverDataAddress);  
+    
+    sendMessage(dataSocketFD, "ready?");
+    char confirmation[6];
+    memset(confirmation, '\0', 6);
 
-	sendMessage(dataSocketFD, "ready?");
-	char confirmation[6];
-	memset(confirmation, '\0', 6);
-
-	recv(dataSocketFD, confirmation, 6, 0);
-	if (strcmp(confirmation, "ready!")) {
-		return -1;
-	}
-
-	return dataSocketFD;
+    recv(dataSocketFD, confirmation, 6, 0);
+    if (strcmp(confirmation, "ready!")) {
+    	return -1;
+    }
+    
+    return dataSocketFD;
 }
 
 /*****************************************************************************************
@@ -468,12 +467,12 @@ int establishDataConnection(int data_port, char *client_host, char *file_name) {
 ******************************************************************************************/
 
 void handleCommand(int dataSocketFD, char *file_name, char *client_host, int data_port, char *command) {
-	if (command[1] == 'l') {
-		sendDirectory(dataSocketFD, client_host, data_port);
-	}
-	else {
-		sendFile(dataSocketFD, file_name, client_host, data_port);
-	}
+    if (command[1] == 'l') {
+    	sendDirectory(dataSocketFD, client_host, data_port);
+    }
+    else {
+    	sendFile(dataSocketFD, file_name, client_host, data_port);
+    }
 }
 
 /*****************************************************************************************
@@ -484,10 +483,10 @@ void handleCommand(int dataSocketFD, char *file_name, char *client_host, int dat
 ******************************************************************************************/
 
 void cleanup(char *client_host, char *command, char *file_name, char *handle) {
-	free(client_host);
-	free(command);
-	free(file_name);
-	free(handle);
+    free(client_host);
+    free(command);
+    free(file_name);
+    free(handle);
 }
 
 /*****************************************************************************************
@@ -517,9 +516,9 @@ int main(int argc, char *argv[]) {
     // Check usage & args
     if (argc < 1) { fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); exit(0); } 
 
-	HandleSIGINT();
+    HandleSIGINT();
 
-	// Exit if port is not valid
+    // Exit if port is not valid
     int CONNECTION_PORT = validatePort(atoi(argv[1])); 
     if (!CONNECTION_PORT) {
         printf("ERROR: Invalid port\n");
@@ -528,53 +527,52 @@ int main(int argc, char *argv[]) {
 
     // Prepare necessary objects for control connection
     int CONNECTION_FD;
-	socklen_t sizeOfClientInfo;
-	struct sockaddr_in serverConnectionAddress, clientAddress;
+    socklen_t sizeOfClientInfo;
+    struct sockaddr_in serverConnectionAddress, clientAddress;
 
     // Setup address, create socket, and begin listening on socket
-	setupConnectionAddress(CONNECTION_PORT, &serverConnectionAddress);
+    setupConnectionAddress(CONNECTION_PORT, &serverConnectionAddress);
     listenSocketFD = createSocket(); 
     beginListening(listenSocketFD, &serverConnectionAddress, clientAddress, &sizeOfClientInfo);
 
     printf("Server open on %d\n", CONNECTION_PORT);
 
     while (1) {
-		// Accept a new connection on the control port 
+	// Accept a new connection on the control port 
         CONNECTION_FD = accept(listenSocketFD, (struct sockaddr *)&clientAddress, &sizeOfClientInfo);  
 
-		// Must receive "ready!" from client to establish data connection
-		if (initializeConnection(CONNECTION_FD)){
-			char *client_host = malloc(256);
-			char *file_name = malloc(256);
-			char *command = malloc(3);		  
+	// Must receive "ready!" from client to establish data connection
+	if (initializeConnection(CONNECTION_FD)){
+	    char *client_host = malloc(256);
+	    char *file_name = malloc(256);
+	    char *command = malloc(3);		  
 
-			// Get (incoming) handle_size ('00' - '99') and handle and traverse through the handle
-			int handle_size = getHandleSize(CONNECTION_FD);
-			char *handle = malloc(handle_size + 1);
-			getHandle(CONNECTION_FD, handle, handle_size); 
-			int data_port = traverseHandle(handle, client_host, command, file_name);
-					
-			printCommand(command, file_name, client_host, data_port);
+	    // Get (incoming) handle_size ('00' - '99') and handle and traverse through the handle
+	    int handle_size = getHandleSize(CONNECTION_FD);
+	    char *handle = malloc(handle_size + 1);
+	    getHandle(CONNECTION_FD, handle, handle_size); 
+	    int data_port = traverseHandle(handle, client_host, command, file_name);
+    
+	    printCommand(command, file_name, client_host, data_port);
 
-			// Initialize data connection and carry out the command
-			int dataSocketFD = establishDataConnection(data_port, client_host, file_name);
-			if (dataSocketFD != -1) {
-				handleCommand(dataSocketFD, file_name, client_host, data_port, command);				
-			}
-			else { printf("Could not initialize data connection\n"); }
+	    // Initialize data connection and carry out the command
+	    int dataSocketFD = establishDataConnection(data_port, client_host, file_name);
+	    if (dataSocketFD != -1) {
+	    	handleCommand(dataSocketFD, file_name, client_host, data_port, command);				
+	    }
+	    else { printf("Could not initialize data connection\n"); }
 
-			// Data connection is now over. Close socket and free allocated memory
-			close(dataSocketFD);
-			cleanup(client_host, file_name, command, handle);
-		}
-		else { printf("Could not initialize control connection\n"); }
+	    // Data connection is now over. Close socket and free allocated memory
+	    close(dataSocketFD);
+	    cleanup(client_host, file_name, command, handle);
+	}
+	else { printf("Could not initialize control connection\n"); }
 
-		// Close this after each client process 
-		close(CONNECTION_FD);
+	// Close this after each client process 
+	close(CONNECTION_FD);
     }
 	
-	// Close when exiting the program. See signal handler
-	close(listenSocketFD);
+    // Close when exiting the program. See signal handler
+    close(listenSocketFD);
     return 0; 
-
 }
